@@ -4,28 +4,53 @@
 
 <html>
   <body>
-    <button>Hello World</button>
+    <input oninput="outputInputFrequency()" type="range" id="range" min="65" max="1046" value="440" style="width:100%;"/>
+    <p id="currentFrequency">Current Frequency: </p>
+    <input id="name" placeholder="Uniqname"></input>
+    <button onClick=sendFrequencyToFirebase()>Input Sound</button>
+
   </body>
 </html>
 
 <script>
-  // Set the configuration for your app
-  // TODO: Replace with your project's config object
+  //FIREBASE CONFIG
   let config = {
     apiKey: "AIzaSyDdhydpdWwubaZbnzRvGQUtPUIi2U4wgD8",
     authDomain: "crowd-sourced-orchestra.firebaseapp.com",
     databaseURL: "https://crowd-sourced-orchestra.firebaseio.com/"
   };
+
+  //FIREBASE INITIALIZATION
   firebase.initializeApp(config);
 
-  // Get a reference to the database service
   let database = firebase.database();
   let userId = "O2mic17G1BWYQpLvxSkemouJIeC3";
-  writeUserData("hello");
 
-  function writeUserData(thing) {
-    database.ref('users/' + userId).set({
-      username: thing
-    });
+  //VARIABLE INITIALIZATION
+  var frequency = document.getElementById("range").value;
+  outputInputFrequency();
+
+  //CONSTANTLY UPDATES FREQUENCY WHENEVER THERE IS INTERACTION
+  function outputInputFrequency() {
+    frequency = document.getElementById("range").value;
+    document.getElementById("currentFrequency").innerHTML = "Current Frequency: " + frequency;
+  }
+
+  function sendFrequencyToFirebase() {
+    //GET NAME FROM INPUT FIELD
+    name = document.getElementById("name").value;
+
+    //ERROR CHECKING
+    if (name == "") {
+      alert("Input Your Uniqame");
+      return;
+    }
+
+    //IF NO ERRORS SEND
+    else {
+      database.ref('users/' + name).set({
+        freq: frequency
+      });
+    }
   }
 </script>

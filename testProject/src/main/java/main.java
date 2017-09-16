@@ -1,13 +1,10 @@
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.FirebaseCredentials;
-import com.google.firebase.database.*;
-
+import com.google.firebase.*;
 import java.io.FileInputStream;
 
-/**
- * Created by kiran on 9/14/2017.
- */
+
 public class main {
     public static void main(String[] args) throws Exception  {
         FileInputStream serviceAccount =
