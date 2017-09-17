@@ -7,8 +7,10 @@
     <input oninput="outputInputFrequency()" type="range" id="range" min="65" max="1046" value="440" style="width:100%;"/>
     <p id="currentFrequency">Current Frequency: </p>
     <input id="name" placeholder="Uniqname"></input>
-    <button onClick=sendFrequencyToFirebase()>Input Sound</button>
-
+    <button onmousedown="sendToFirebase()" onmouseup="stopToFirebase()">Input Sound</button> </p>
+    <input type="radio" name="waveform" value="Sine" checked> Sine<br>
+    <input type="radio" name="waveform" value="Triangle"> Triangle<br>
+    <input type="radio" name="waveform" value="Square"> Square
   </body>
 </html>
 
@@ -28,6 +30,7 @@
 
   //VARIABLE INITIALIZATION
   var frequency = document.getElementById("range").value;
+  var wave = "Sine";
   outputInputFrequency();
 
   //CONSTANTLY UPDATES FREQUENCY WHENEVER THERE IS INTERACTION
@@ -36,10 +39,22 @@
     document.getElementById("currentFrequency").innerHTML = "Current Frequency: " + frequency;
   }
 
-  function sendFrequencyToFirebase() {
+  function sendToFirebase() {
     //GET NAME FROM INPUT FIELD
     name = document.getElementById("name").value;
 
+    //GET WAVEFORM
+    waveforms = document.getElementsByName("waveform");
+    
+    for (var i = 0, length = waveforms.length; i < length; i++) {
+    if (waveforms[i].checked) {
+        // do whatever you want with the checked radio
+        wave = waveforms[i].value;
+
+        // only one radio can be logically checked, don't check the rest
+        break;
+    }
+}
     //ERROR CHECKING
     if (name == "") {
       alert("Input Your Uniqame");
@@ -49,8 +64,31 @@
     //IF NO ERRORS SEND
     else {
       database.ref('users/' + name).set({
-        freq: frequency
+        freq: frequency,
+        type: wave,
+        active: true
+        
       });
     }
   }
+
+function stopToFirebase() {
+  name = document.getElementById("name").value;
+
+    //ERROR CHECKING
+    if (name == "") {
+      //alert("Input Your Uniqame"); Double Alert
+      return;
+    }
+
+    //IF NO ERRORS SEND
+    else {
+      database.ref('users/' + name).set({
+        freq: frequency,
+        type: wave,
+        active: false
+      });
+    }
+}
+
 </script>

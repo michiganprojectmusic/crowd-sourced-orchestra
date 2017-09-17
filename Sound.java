@@ -20,7 +20,8 @@ public class Sound {
 			json = readJsonFromUrl("https://crowd-sourced-orchestra.firebaseio.com/users.json");
 			if (!oldJSON.toString().equals(json.toString())) {
 				System.out.println(json.toString());
-				//TODO: Need to add some code to stop the old notes from playing
+				// TODO: Need to add some code to stop the old notes from
+				// playing
 				play(json.toString());
 			}
 			Thread.sleep(100);
@@ -58,22 +59,86 @@ public class Sound {
 		return a;
 	}
 
+	// create a triangle wave of the given frequency for the given duration
+	public static double[] triangle(double hz, double duration) {
+		int n = (int) (StdAudio.SAMPLE_RATE * duration);
+		double[] a = new double[n + 1];
+		int period = (int) (StdAudio.SAMPLE_RATE / hz);
+		boolean up = true;
+		a[0] = 0;
+		for (int i = 1; i <= n; i++) {
+			if (up) {
+				a[i] = a[i - 1] + (2. / period);
+			} else {
+				a[i] = a[i - 1] - (2. / period);
+			}
+
+			if (i % (period / 2) == 0) {
+				up = !up;
+			}
+		}
+		return a;
+	}
+
+	// create a square wave of the given frequency for the given duration
+	public static double[] square(double hz, double duration) {
+		int n = (int) (StdAudio.SAMPLE_RATE * duration);
+		double[] a = new double[n + 1];
+		int period = (int) (StdAudio.SAMPLE_RATE / hz);
+		double val = .1;
+		for (int i = 0; i <= n; i++) {
+			a[i] = val;
+
+			if (i % (period / 2) == 0) {
+				val = -val;
+			}
+		}
+		return a;
+	}
+
 	public static void play(String jsonText) {
 
 		ArrayList<double[]> tones = new ArrayList<double[]>();
-		int prev = 0, index = 1;
-		index = jsonText.indexOf("\"freq\"", prev);
+		int startIndex = 1;
+
+		startIndex = jsonText.indexOf(":{", 0);
 
 		do {
-			index += 8; // shift to data
-			prev = index;
-			double freq = Integer.parseInt(jsonText.substring(index, jsonText.indexOf("\"", index)));
+			int activeIndex = jsonText.indexOf("\"active\"", startIndex) + 9;
+			boolean active = true;
+			if (activeIndex != 8 && activeIndex < (startIndex + 38)) { 
+				// May have	calculated offset wrong, errors likey with short uniqnames
+				active = Boolean.parseBoolean(jsonText.substring(activeIndex, jsonText.indexOf(",", activeIndex)));
+			}
+			if (active) {
 
-			//TODO: Improve latency. Adding these huge arrays slows the program down significantly.
-			tones.add(tone(freq, 20));
+				int freqIndex = jsonText.indexOf("\"freq\"", startIndex) + 8;
+				double freq = Double.parseDouble(jsonText.substring(freqIndex, jsonText.indexOf("\"", freqIndex)));
 
-			index = jsonText.indexOf("\"freq\"", prev);
-		} while (index > 0);
+				int typeIndex = jsonText.indexOf("\"type\"", startIndex) + 8;
+				String type = jsonText.substring(typeIndex, jsonText.indexOf("\"", typeIndex));
+
+				// TODO: Improve latency. adding() these huge arrays slows the
+				// program down significantly.
+				if (typeIndex > (startIndex + 38)) { 
+					// Inaccurate offset, but should work since type comes after active
+					// old data without type field
+					tones.add(tone(freq, 1));
+				} else if (type.equals("Sine")) {
+					tones.add(tone(freq, 1));
+				} else if (type.equals("Triangle")) {
+					tones.add(triangle(freq, 1));
+				} else if (type.equals("Square")) {
+					tones.add(square(freq, 1));
+				} else {
+					// Accounts for -1 return for typeIndex
+					tones.add(tone(freq, 1));
+				}
+
+			}
+
+			startIndex = jsonText.indexOf(":{", startIndex + 1);
+		} while (startIndex > 0);
 
 		if (!tones.isEmpty()) {
 
